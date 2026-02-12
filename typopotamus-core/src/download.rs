@@ -268,3 +268,73 @@ fn sanitize_component(value: &str) -> String {
 
     output.trim_matches('-').to_owned()
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+    use std::fs;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    use super::{decode_data_url, file_stem_for_font, unique_output_path};
+    use crate::model::FontInfo;
+
+    fn make_font(name: &str) -> FontInfo {
+        FontInfo {
+            name: name.to_owned(),
+            family: "ACME / Sans".to_owned(),
+            format: "WOFF2".to_owned(),
+            url: "https://cdn.example/font.woff2".to_owned(),
+            weight: "400".to_owned(),
+            style: "Italic".to_owned(),
+            referer: "https://example.com".to_owned(),
+        }
+    }
+
+    fn make_temp_dir() -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time should be after epoch")
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!(
+            "typopotamus-core-download-tests-{}-{nanos}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&dir).expect("failed to create temp test directory");
+        dir
+    }
+
+    #[test]
+    fn decode_data_url_supports_base64_and_percent_encoded_payloads() {
+        let (base64_bytes, base64_mime) = decode_data_url("data:font/woff2;base64,SGVsbG8=")
+            .expect("base64 data URL should decode");
+        assert_eq!(base64_bytes, b"Hello");
+        assert_eq!(base64_mime.as_deref(), Some("font/woff2"));
+
+        let (percent_bytes, percent_mime) = decode_data_url("data:application/octet-stream,Hi%20A")
+            .expect("percent-encoded data URL should decode");
+        assert_eq!(percent_bytes, b"Hi A");
+        assert_eq!(percent_mime.as_deref(), Some("application/octet-stream"));
+    }
+
+    #[test]
+    fn path_generation_sanitizes_names_and_allocates_unique_sequential_paths() {
+        let font = make_font("My Font!.woff2");
+        assert_eq!(file_stem_for_font(&font), "my-font-400-italic");
+
+        let temp_dir = make_temp_dir();
+        let mut used_paths = HashSet::new();
+
+        let first = unique_output_path(&temp_dir, "my-font", "woff2", &mut used_paths);
+        assert_eq!(first, temp_dir.join("my-font.woff2"));
+        fs::write(&first, b"seed").expect("failed to create initial file");
+
+        let second = unique_output_path(&temp_dir, "my-font", "woff2", &mut used_paths);
+        assert_eq!(second, temp_dir.join("my-font-1.woff2"));
+
+        let third = unique_output_path(&temp_dir, "my-font", "woff2", &mut used_paths);
+        assert_eq!(third, temp_dir.join("my-font-2.woff2"));
+
+        fs::remove_dir_all(&temp_dir).expect("failed to clean up temp test directory");
+    }
+}
