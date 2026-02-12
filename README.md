@@ -16,7 +16,7 @@ Use it responsibly and only in ways that comply with website terms, applicable l
 ## Build and Lint
 
 ```bash
-cd /Users/kchen/dev/github.com/kevinmichaelchen/typopotamus
+cd typopotamus
 cargo fmt
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 ```
