@@ -485,3 +485,99 @@ fn format_index_range(start: usize, end: usize) -> String {
 fn normalize(input: &str) -> String {
     input.trim().to_ascii_lowercase()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{infer_family_groups_all, select_indices_by_inferred_family_names};
+    use crate::model::FontInfo;
+
+    fn make_font(family: &str, name: &str, url: &str) -> FontInfo {
+        FontInfo {
+            name: name.to_owned(),
+            family: family.to_owned(),
+            format: "WOFF2".to_owned(),
+            url: url.to_owned(),
+            weight: "400".to_owned(),
+            style: "normal".to_owned(),
+            referer: "https://example.com".to_owned(),
+        }
+    }
+
+    #[test]
+    fn inferred_grouping_collapses_hashed_family_variants() {
+        let fonts = vec![
+            make_font(
+                "academica_book_bold-s.p.8c23f835",
+                "academica_book_bold-s.p.8c23f835.woff2",
+                "https://cdn.test/0.woff2",
+            ),
+            make_font(
+                "academica_book_bold_italic-s.p.1f42b458",
+                "academica_book_bold_italic-s.p.1f42b458.woff2",
+                "https://cdn.test/1.woff2",
+            ),
+            make_font(
+                "academica_book_regular-s.p.ec9218b1",
+                "academica_book_regular-s.p.ec9218b1.woff2",
+                "https://cdn.test/2.woff2",
+            ),
+            make_font(
+                "academica_book_regular_italic-s.p.98424ff3",
+                "academica_book_regular_italic-s.p.98424ff3.woff2",
+                "https://cdn.test/3.woff2",
+            ),
+            make_font(
+                "atlas_grotesk_regular-s.p.93cecfe0",
+                "atlas_grotesk_regular-s.p.93cecfe0.woff2",
+                "https://cdn.test/4.woff2",
+            ),
+        ];
+
+        let groups = infer_family_groups_all(&fonts);
+        assert_eq!(groups.len(), 2);
+
+        let academica = groups
+            .iter()
+            .find(|group| group.name == "Academica Book")
+            .expect("expected Academica Book group");
+        assert_eq!(academica.files, 4);
+        assert_eq!(academica.font_indices, vec![0, 1, 2, 3]);
+        assert_eq!(academica.index_ranges, vec!["0-3"]);
+        assert_eq!(academica.weights, vec!["400", "700"]);
+        assert_eq!(academica.styles, vec!["italic", "normal"]);
+        assert_eq!(academica.aliases.len(), 4);
+    }
+
+    #[test]
+    fn inferred_family_selection_accepts_display_name_and_alias() {
+        let fonts = vec![
+            make_font(
+                "academica_book_bold-s.p.8c23f835",
+                "academica_book_bold-s.p.8c23f835.woff2",
+                "https://cdn.test/0.woff2",
+            ),
+            make_font(
+                "academica_book_regular-s.p.ec9218b1",
+                "academica_book_regular-s.p.ec9218b1.woff2",
+                "https://cdn.test/1.woff2",
+            ),
+            make_font(
+                "atlas_grotesk_regular-s.p.93cecfe0",
+                "atlas_grotesk_regular-s.p.93cecfe0.woff2",
+                "https://cdn.test/2.woff2",
+            ),
+        ];
+
+        let by_display = select_indices_by_inferred_family_names(
+            &fonts,
+            &[String::from("Academica Book")],
+        );
+        assert_eq!(by_display, vec![0, 1]);
+
+        let by_alias = select_indices_by_inferred_family_names(
+            &fonts,
+            &[String::from("academica_book_regular-s.p.ec9218b1")],
+        );
+        assert_eq!(by_alias, vec![0, 1]);
+    }
+}
