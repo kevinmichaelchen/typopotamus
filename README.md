@@ -2,6 +2,11 @@
 
 A Rust monorepo for discovering and downloading web fonts from any website.
 
+## Academic Use Notice
+
+This project is intended for academic and research purposes only.
+Use it responsibly and only in ways that comply with website terms, applicable licenses, and relevant laws.
+
 ## Workspace Crates
 
 - `typopotamus-core`: shared extraction, grouping, selection, and download logic.
