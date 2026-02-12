@@ -1,1 +1,11 @@
-/target
+# Rust build artifacts
+/target/
+**/target/
+
+# Local runtime output
+/downloads/
+**/downloads/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
