@@ -1,0 +1,11 @@
+[package]
+name = "typopotamus-tui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+crossterm = { workspace = true }
+ratatui = { workspace = true }
+typopotamus-core = { workspace = true }

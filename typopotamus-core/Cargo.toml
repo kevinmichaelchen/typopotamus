@@ -1,0 +1,14 @@
+[package]
+name = "typopotamus-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+base64 = { workspace = true }
+once_cell = { workspace = true }
+percent-encoding = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true }
+scraper = { workspace = true }
+url = { workspace = true }
