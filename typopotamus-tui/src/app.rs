@@ -8,7 +8,8 @@ use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap};
 use typopotamus_core::download::{self, DownloadReport};
 use typopotamus_core::extractor::{extract_fonts_from_url, normalize_target_url};
-use typopotamus_core::model::{FontFamily, FontInfo, group_by_family};
+use typopotamus_core::inspect::group_by_inferred_family;
+use typopotamus_core::model::{FontFamily, FontInfo};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum AppMode {
@@ -276,7 +277,7 @@ impl App {
 
     fn finish_scan(&mut self, fonts: Vec<FontInfo>) {
         self.fonts = fonts;
-        self.families = group_by_family(&self.fonts);
+        self.families = group_by_inferred_family(&self.fonts);
         self.mode = AppMode::Browsing;
         self.focus = FocusPane::Families;
         self.selected_family_index = 0;

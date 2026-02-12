@@ -38,6 +38,12 @@ Inspect fonts:
 cargo run -p typopotamus-cli -- inspect --url https://www.apple.com
 ```
 
+Inspect individual font files instead of grouped families:
+
+```bash
+cargo run -p typopotamus-cli -- inspect --url https://www.apple.com --view font
+```
+
 Inspect fonts as JSON (for agents/scripts):
 
 ```bash
